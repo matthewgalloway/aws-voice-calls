@@ -121,6 +121,16 @@ resource "aws_apprunner_service" "app" {
           NEXT_PUBLIC_CLERK_SIGN_UP_URL      = "/sign-up"
           NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL = "/dashboard"
           NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL = "/dashboard"
+          # DynamoDB tables
+          DYNAMODB_USERS_TABLE               = aws_dynamodb_table.users.name
+          DYNAMODB_CALLS_TABLE               = aws_dynamodb_table.calls.name
+          DYNAMODB_ENTRIES_TABLE             = aws_dynamodb_table.entries.name
+          # Twilio configuration
+          TWILIO_ACCOUNT_SID                 = var.twilio_account_sid
+          TWILIO_AUTH_TOKEN                  = var.twilio_auth_token
+          TWILIO_PHONE_NUMBER                = var.twilio_phone_number
+          # Lambda ARNs for scheduler integration
+          SCHEDULER_MANAGER_ARN              = aws_lambda_function.scheduler_manager.arn
         }
       }
 
@@ -197,4 +207,74 @@ resource "aws_iam_policy" "app_runner_secrets_access" {
 resource "aws_iam_role_policy_attachment" "app_runner_secrets_access" {
   role       = aws_iam_role.app_runner_instance.name
   policy_arn = aws_iam_policy.app_runner_secrets_access.arn
+}
+
+# Twilio Credentials Secret
+resource "aws_secretsmanager_secret" "twilio_credentials" {
+  name        = "${var.app_name}-${var.environment}-twilio-credentials"
+  description = "Twilio API credentials for ${var.app_name}"
+}
+
+resource "aws_secretsmanager_secret_version" "twilio_credentials" {
+  secret_id = aws_secretsmanager_secret.twilio_credentials.id
+  secret_string = jsonencode({
+    accountSid = var.twilio_account_sid
+    authToken  = var.twilio_auth_token
+  })
+}
+
+# IAM Policy for App Runner to access DynamoDB
+resource "aws_iam_policy" "app_runner_dynamodb_access" {
+  name        = "${var.app_name}-${var.environment}-dynamodb-access"
+  description = "Allow App Runner to access DynamoDB tables"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query"
+        ]
+        Resource = [
+          aws_dynamodb_table.users.arn,
+          aws_dynamodb_table.calls.arn,
+          aws_dynamodb_table.entries.arn,
+          "${aws_dynamodb_table.calls.arn}/index/*",
+          "${aws_dynamodb_table.entries.arn}/index/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "app_runner_dynamodb_access" {
+  role       = aws_iam_role.app_runner_instance.name
+  policy_arn = aws_iam_policy.app_runner_dynamodb_access.arn
+}
+
+# IAM Policy for App Runner to invoke Scheduler Manager Lambda
+resource "aws_iam_policy" "app_runner_lambda_invoke" {
+  name        = "${var.app_name}-${var.environment}-lambda-invoke"
+  description = "Allow App Runner to invoke Lambda functions"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "lambda:InvokeFunction"
+        Resource = aws_lambda_function.scheduler_manager.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "app_runner_lambda_invoke" {
+  role       = aws_iam_role.app_runner_instance.name
+  policy_arn = aws_iam_policy.app_runner_lambda_invoke.arn
 }

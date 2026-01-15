@@ -9,6 +9,11 @@ environment = "prod"
 clerk_publishable_key = "pk_test_your-key-here"
 clerk_secret_key      = "sk_test_your-key-here"
 
+# Get these from https://console.twilio.com
+twilio_account_sid   = "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+twilio_auth_token    = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+twilio_phone_number  = "+15551234567"  # Your Twilio phone number in E.164 format
+
 # Optional: Adjust resources
 # app_runner_cpu    = "1024"   # 1 vCPU
 # app_runner_memory = "2048"   # 2 GB

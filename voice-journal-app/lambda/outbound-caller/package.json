@@ -1,0 +1,22 @@
+{
+  "name": "outbound-caller-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function to initiate outbound calls via Twilio",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "package": "npm run build && cd dist && zip -r ../function.zip .",
+    "clean": "rm -rf dist function.zip"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.969.0",
+    "@aws-sdk/client-secrets-manager": "^3.969.0",
+    "@aws-sdk/lib-dynamodb": "^3.969.0",
+    "twilio": "^5.11.2"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

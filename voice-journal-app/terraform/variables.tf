@@ -45,3 +45,21 @@ variable "image_tag" {
   type        = string
   default     = "latest"
 }
+
+# Twilio Configuration
+variable "twilio_account_sid" {
+  description = "Twilio Account SID"
+  type        = string
+  sensitive   = true
+}
+
+variable "twilio_auth_token" {
+  description = "Twilio Auth Token"
+  type        = string
+  sensitive   = true
+}
+
+variable "twilio_phone_number" {
+  description = "Twilio phone number for calls (E.164 format, e.g., +15551234567)"
+  type        = string
+}
