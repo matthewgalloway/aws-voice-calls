@@ -107,7 +107,7 @@ export async function createCallRecord(call: Omit<CallRecord, 'timestamp'>): Pro
 }
 
 export async function updateCallRecord(
-  callSid: string,
+  callControlId: string,
   updates: Partial<CallRecord>
 ): Promise<void> {
   const updateExpressions: string[] = [];
@@ -127,16 +127,16 @@ export async function updateCallRecord(
     updateExpressions.push('recordingUrl = :recordingUrl');
     expressionAttributeValues[':recordingUrl'] = updates.recordingUrl;
   }
-  if (updates.recordingSid !== undefined) {
-    updateExpressions.push('recordingSid = :recordingSid');
-    expressionAttributeValues[':recordingSid'] = updates.recordingSid;
+  if (updates.recordingId !== undefined) {
+    updateExpressions.push('recordingId = :recordingId');
+    expressionAttributeValues[':recordingId'] = updates.recordingId;
   }
 
   if (updateExpressions.length > 0) {
     await docClient.send(
       new UpdateCommand({
         TableName: CALLS_TABLE,
-        Key: { callSid },
+        Key: { callControlId },
         UpdateExpression: `SET ${updateExpressions.join(', ')}`,
         ExpressionAttributeValues: expressionAttributeValues,
         ExpressionAttributeNames: Object.keys(expressionAttributeNames).length > 0 ? expressionAttributeNames : undefined,
@@ -145,11 +145,11 @@ export async function updateCallRecord(
   }
 }
 
-export async function getCallRecord(callSid: string): Promise<CallRecord | null> {
+export async function getCallRecord(callControlId: string): Promise<CallRecord | null> {
   const result = await docClient.send(
     new GetCommand({
       TableName: CALLS_TABLE,
-      Key: { callSid },
+      Key: { callControlId },
     })
   );
   return (result.Item as CallRecord) || null;

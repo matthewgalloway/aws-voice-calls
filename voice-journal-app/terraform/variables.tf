@@ -46,20 +46,25 @@ variable "image_tag" {
   default     = "latest"
 }
 
-# Twilio Configuration
-variable "twilio_account_sid" {
-  description = "Twilio Account SID"
+# Telnyx Configuration
+variable "telnyx_api_key" {
+  description = "Telnyx API Key (v2)"
   type        = string
   sensitive   = true
 }
 
-variable "twilio_auth_token" {
-  description = "Twilio Auth Token"
+variable "telnyx_public_key" {
+  description = "Telnyx Public Key for webhook signature verification"
   type        = string
   sensitive   = true
 }
 
-variable "twilio_phone_number" {
-  description = "Twilio phone number for calls (E.164 format, e.g., +15551234567)"
+variable "telnyx_connection_id" {
+  description = "Telnyx Connection ID (SIP Connection or TeXML Application)"
+  type        = string
+}
+
+variable "telnyx_phone_number" {
+  description = "Telnyx phone number for calls (E.164 format, e.g., +15551234567)"
   type        = string
 }

@@ -1,7 +1,7 @@
 {
   "name": "outbound-caller-lambda",
   "version": "1.0.0",
-  "description": "Lambda function to initiate outbound calls via Twilio",
+  "description": "Lambda function to initiate outbound calls via Telnyx",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -12,7 +12,7 @@
     "@aws-sdk/client-dynamodb": "^3.969.0",
     "@aws-sdk/client-secrets-manager": "^3.969.0",
     "@aws-sdk/lib-dynamodb": "^3.969.0",
-    "twilio": "^5.11.2"
+    "telnyx": "^2.5.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145",

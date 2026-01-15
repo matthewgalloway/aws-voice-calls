@@ -29,9 +29,9 @@ const TABLES: Record<string, CreateTableCommandInput> = {
   },
   calls: {
     TableName: 'voice-journal-dev-calls',
-    KeySchema: [{ AttributeName: 'callSid', KeyType: KeyType.HASH }],
+    KeySchema: [{ AttributeName: 'callControlId', KeyType: KeyType.HASH }],
     AttributeDefinitions: [
-      { AttributeName: 'callSid', AttributeType: ScalarAttributeType.S },
+      { AttributeName: 'callControlId', AttributeType: ScalarAttributeType.S },
       { AttributeName: 'userId', AttributeType: ScalarAttributeType.S },
       { AttributeName: 'timestamp', AttributeType: ScalarAttributeType.S },
     ],

@@ -6,7 +6,7 @@ const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api/health',
-  '/api/twilio/(.*)', // Twilio webhooks must be public
+  '/api/telnyx/(.*)', // Telnyx webhooks must be public
 ])
 
 export default clerkMiddleware(async (auth, request) => {
@@ -22,7 +22,7 @@ export default clerkMiddleware(async (auth, request) => {
 
 export const config = {
   matcher: [
-    '/((?!_next|api/health|api/twilio|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api(?!/health|/twilio)|trpc)(.*)',
+    '/((?!_next|api/health|api/telnyx|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api(?!/health|/telnyx)|trpc)(.*)',
   ],
 }

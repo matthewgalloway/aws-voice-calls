@@ -44,7 +44,7 @@ resource "aws_iam_role_policy" "outbound_caller_policy" {
           "secretsmanager:GetSecretValue"
         ]
         Resource = [
-          aws_secretsmanager_secret.twilio_credentials.arn
+          aws_secretsmanager_secret.telnyx_credentials.arn
         ]
       },
       {
@@ -73,11 +73,12 @@ resource "aws_lambda_function" "outbound_caller" {
 
   environment {
     variables = {
-      TWILIO_SECRET_ARN   = aws_secretsmanager_secret.twilio_credentials.arn
-      TWILIO_PHONE_NUMBER = var.twilio_phone_number
-      APP_URL             = "https://${aws_apprunner_service.app.service_url}"
-      USERS_TABLE         = aws_dynamodb_table.users.name
-      CALLS_TABLE         = aws_dynamodb_table.calls.name
+      TELNYX_SECRET_ARN     = aws_secretsmanager_secret.telnyx_credentials.arn
+      TELNYX_PHONE_NUMBER   = var.telnyx_phone_number
+      TELNYX_CONNECTION_ID  = var.telnyx_connection_id
+      APP_URL               = "https://${aws_apprunner_service.app.service_url}"
+      USERS_TABLE           = aws_dynamodb_table.users.name
+      CALLS_TABLE           = aws_dynamodb_table.calls.name
     }
   }
 

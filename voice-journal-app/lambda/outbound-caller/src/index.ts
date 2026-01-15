@@ -2,11 +2,12 @@ import { ScheduledEvent, Context } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
-import twilio from 'twilio';
+import Telnyx from 'telnyx';
 
 // Environment variables
-const TWILIO_SECRET_ARN = process.env.TWILIO_SECRET_ARN!;
-const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER!;
+const TELNYX_SECRET_ARN = process.env.TELNYX_SECRET_ARN!;
+const TELNYX_PHONE_NUMBER = process.env.TELNYX_PHONE_NUMBER!;
+const TELNYX_CONNECTION_ID = process.env.TELNYX_CONNECTION_ID!;
 const APP_URL = process.env.APP_URL!;
 const USERS_TABLE = process.env.USERS_TABLE!;
 const CALLS_TABLE = process.env.CALLS_TABLE!;
@@ -16,8 +17,8 @@ const dynamoClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const secretsClient = new SecretsManagerClient({});
 
-// Cached Twilio credentials
-let twilioCredentials: { accountSid: string; authToken: string } | null = null;
+// Cached Telnyx API key
+let telnyxApiKey: string | null = null;
 
 interface ScheduledCallEvent {
   userId: string;
@@ -32,23 +33,24 @@ interface UserPreferences {
   isActive: boolean;
 }
 
-async function getTwilioCredentials(): Promise<{ accountSid: string; authToken: string }> {
-  if (twilioCredentials) {
-    return twilioCredentials;
+async function getTelnyxApiKey(): Promise<string> {
+  if (telnyxApiKey) {
+    return telnyxApiKey;
   }
 
   const response = await secretsClient.send(
     new GetSecretValueCommand({
-      SecretId: TWILIO_SECRET_ARN,
+      SecretId: TELNYX_SECRET_ARN,
     })
   );
 
   if (!response.SecretString) {
-    throw new Error('Failed to retrieve Twilio credentials');
+    throw new Error('Failed to retrieve Telnyx API key');
   }
 
-  twilioCredentials = JSON.parse(response.SecretString);
-  return twilioCredentials!;
+  const secret = JSON.parse(response.SecretString);
+  telnyxApiKey = secret.apiKey;
+  return telnyxApiKey!;
 }
 
 async function getUserPreferences(userId: string): Promise<UserPreferences | null> {
@@ -63,7 +65,7 @@ async function getUserPreferences(userId: string): Promise<UserPreferences | nul
 }
 
 async function createCallRecord(
-  callSid: string,
+  callControlId: string,
   userId: string,
   fromNumber: string,
   toNumber: string
@@ -72,7 +74,7 @@ async function createCallRecord(
     new PutCommand({
       TableName: CALLS_TABLE,
       Item: {
-        callSid,
+        callControlId,
         userId,
         timestamp: new Date().toISOString(),
         direction: 'outbound',
@@ -88,7 +90,6 @@ export async function handler(event: ScheduledEvent | ScheduledCallEvent, contex
   console.log('Outbound caller invoked:', JSON.stringify(event));
 
   // Extract userId and phoneNumber from event
-  // EventBridge Scheduler passes custom payload
   let userId: string;
   let phoneNumber: string;
 
@@ -116,34 +117,38 @@ export async function handler(event: ScheduledEvent | ScheduledCallEvent, contex
     return;
   }
 
-  // Verify phone number matches (in case it was updated since schedule was created)
+  // Verify phone number matches
   if (user.phoneNumber !== phoneNumber) {
-    console.log(`Phone number mismatch for user ${userId}. Expected: ${user.phoneNumber}, Got: ${phoneNumber}`);
-    // Use the current phone number from preferences
+    console.log(`Phone number mismatch for user ${userId}. Using current: ${user.phoneNumber}`);
     phoneNumber = user.phoneNumber;
   }
 
-  // Get Twilio credentials
-  const credentials = await getTwilioCredentials();
-  const twilioClient = twilio(credentials.accountSid, credentials.authToken);
+  // Get Telnyx API key
+  const apiKey = await getTelnyxApiKey();
+  const telnyx = Telnyx(apiKey);
 
   try {
+    // Encode userId in client_state for the webhook to retrieve
+    const clientState = Buffer.from(userId).toString('base64');
+
     // Initiate the outbound call
-    const call = await twilioClient.calls.create({
+    const call = await telnyx.calls.create({
+      connection_id: TELNYX_CONNECTION_ID,
       to: phoneNumber,
-      from: TWILIO_PHONE_NUMBER,
-      url: `${APP_URL}/api/twilio/voice?direction=outbound&userId=${encodeURIComponent(userId)}`,
-      statusCallback: `${APP_URL}/api/twilio/status`,
-      statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-      statusCallbackMethod: 'POST',
+      from: TELNYX_PHONE_NUMBER,
+      webhook_url: `${APP_URL}/api/telnyx/voice?direction=outbound&userId=${encodeURIComponent(userId)}`,
+      webhook_url_method: 'POST',
+      client_state: clientState,
+      answering_machine_detection: 'detect',
     });
 
-    console.log(`Call initiated: ${call.sid}`);
+    const callControlId = call.data.call_control_id;
+    console.log(`Call initiated: ${callControlId}`);
 
     // Record the call in DynamoDB
-    await createCallRecord(call.sid, userId, TWILIO_PHONE_NUMBER, phoneNumber);
+    await createCallRecord(callControlId, userId, TELNYX_PHONE_NUMBER, phoneNumber);
 
-    console.log(`Call record created for: ${call.sid}`);
+    console.log(`Call record created for: ${callControlId}`);
   } catch (error) {
     console.error('Failed to initiate call:', error);
     throw error;

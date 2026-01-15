@@ -12,14 +12,14 @@ export interface UserPreferences {
 
 // Call record for tracking call history
 export interface CallRecord {
-  callSid: string; // Twilio Call SID (primary key)
+  callControlId: string; // Telnyx Call Control ID (primary key)
   userId: string;
   timestamp: string; // ISO timestamp
   direction: 'inbound' | 'outbound';
   status: 'initiated' | 'ringing' | 'in-progress' | 'completed' | 'failed' | 'busy' | 'no-answer';
   duration?: number; // Call duration in seconds
   recordingUrl?: string;
-  recordingSid?: string;
+  recordingId?: string;
   fromNumber: string;
   toNumber: string;
 }
@@ -29,7 +29,7 @@ export interface JournalEntry {
   entryId: string; // UUID (primary key)
   userId: string;
   createdAt: string; // ISO timestamp
-  callSid: string; // Associated Twilio Call SID
+  callControlId: string; // Associated Telnyx Call Control ID
   transcription: string;
   duration?: number; // Recording duration in seconds
   summary?: string; // AI-generated summary (future)
@@ -54,39 +54,57 @@ export interface GetJournalEntriesResponse {
   nextCursor?: string;
 }
 
-// Twilio webhook payload types
-export interface TwilioVoiceWebhookPayload {
-  CallSid: string;
-  AccountSid: string;
-  From: string;
-  To: string;
-  CallStatus: string;
-  Direction: string;
-  ApiVersion: string;
-  Caller: string;
-  Called: string;
+// Telnyx webhook payload types
+export interface TelnyxWebhookPayload {
+  data: {
+    event_type: string;
+    id: string;
+    occurred_at: string;
+    payload: TelnyxCallPayload | TelnyxRecordingPayload | TelnyxTranscriptionPayload;
+    record_type: string;
+  };
+  meta: {
+    attempt: number;
+    delivered_to: string;
+  };
 }
 
-export interface TwilioRecordingWebhookPayload extends TwilioVoiceWebhookPayload {
-  RecordingUrl: string;
-  RecordingSid: string;
-  RecordingDuration: string;
+export interface TelnyxCallPayload {
+  call_control_id: string;
+  call_leg_id: string;
+  call_session_id: string;
+  connection_id: string;
+  from: string;
+  to: string;
+  direction: 'incoming' | 'outgoing';
+  state: 'parked' | 'bridging' | 'active' | 'hangup';
+  client_state?: string;
+  start_time?: string;
+  end_time?: string;
 }
 
-export interface TwilioTranscriptionWebhookPayload {
-  TranscriptionSid: string;
-  TranscriptionText: string;
-  TranscriptionStatus: string;
-  TranscriptionUrl: string;
-  RecordingSid: string;
-  CallSid: string;
-  AccountSid: string;
+export interface TelnyxRecordingPayload {
+  call_control_id: string;
+  call_leg_id: string;
+  call_session_id: string;
+  connection_id: string;
+  recording_id: string;
+  recording_urls: {
+    mp3: string;
+    wav: string;
+  };
+  channels: string;
+  duration_millis: number;
 }
 
-export interface TwilioStatusWebhookPayload extends TwilioVoiceWebhookPayload {
-  CallDuration?: string;
-  Timestamp?: string;
-  SequenceNumber?: string;
+export interface TelnyxTranscriptionPayload {
+  call_control_id: string;
+  call_leg_id: string;
+  call_session_id: string;
+  transcription_id: string;
+  transcription_text: string;
+  status: 'completed' | 'failed';
+  recording_id: string;
 }
 
 // Common timezone options for the UI

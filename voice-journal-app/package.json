@@ -22,7 +22,7 @@
     "next": "14.2.25",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "twilio": "^5.11.2",
+    "telnyx": "^5.2.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Start ngrok tunnel for local Twilio webhook testing
+# Start ngrok tunnel for local Telnyx webhook testing
 # Prerequisites: ngrok installed and authenticated (ngrok config add-authtoken YOUR_TOKEN)
 
 PORT=${1:-3000}
@@ -46,13 +46,13 @@ echo "=========================================="
 echo ""
 echo "Public URL: $NGROK_URL"
 echo ""
-echo "Configure these URLs in your Twilio console:"
+echo "Configure these URLs in your Telnyx portal:"
 echo ""
 echo "  Voice webhook (HTTP POST):"
-echo "    $NGROK_URL/api/twilio/voice"
+echo "    $NGROK_URL/api/telnyx/voice"
 echo ""
 echo "  Status callback (HTTP POST):"
-echo "    $NGROK_URL/api/twilio/status"
+echo "    $NGROK_URL/api/telnyx/status"
 echo ""
 echo "Add to your .env.local:"
 echo "  NGROK_URL=$NGROK_URL"

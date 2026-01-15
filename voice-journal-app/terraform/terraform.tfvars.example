@@ -9,10 +9,11 @@ environment = "prod"
 clerk_publishable_key = "pk_test_your-key-here"
 clerk_secret_key      = "sk_test_your-key-here"
 
-# Get these from https://console.twilio.com
-twilio_account_sid   = "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-twilio_auth_token    = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-twilio_phone_number  = "+15551234567"  # Your Twilio phone number in E.164 format
+# Get these from https://portal.telnyx.com
+telnyx_api_key       = "KEY_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+telnyx_public_key    = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+telnyx_connection_id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # SIP Connection or TeXML Application ID
+telnyx_phone_number  = "+15551234567"  # Your Telnyx phone number in E.164 format
 
 # Optional: Adjust resources
 # app_runner_cpu    = "1024"   # 1 vCPU

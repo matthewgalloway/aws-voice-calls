@@ -67,16 +67,16 @@ output "scheduler_manager_lambda_arn" {
   value       = aws_lambda_function.scheduler_manager.arn
 }
 
-# Twilio Webhook URLs
-output "twilio_webhook_urls" {
-  description = "URLs to configure in Twilio console"
+# Telnyx Webhook URLs
+output "telnyx_webhook_urls" {
+  description = "URLs to configure in Telnyx portal"
   value       = <<-EOT
-    Configure these URLs in Twilio console for your phone number:
+    Configure these URLs in Telnyx portal for your connection:
 
     Voice webhook (HTTP POST):
-      https://${aws_apprunner_service.app.service_url}/api/twilio/voice
+      https://${aws_apprunner_service.app.service_url}/api/telnyx/voice
 
     Status callback (HTTP POST):
-      https://${aws_apprunner_service.app.service_url}/api/twilio/status
+      https://${aws_apprunner_service.app.service_url}/api/telnyx/status
   EOT
 }

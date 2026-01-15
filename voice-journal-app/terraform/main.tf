@@ -125,10 +125,11 @@ resource "aws_apprunner_service" "app" {
           DYNAMODB_USERS_TABLE               = aws_dynamodb_table.users.name
           DYNAMODB_CALLS_TABLE               = aws_dynamodb_table.calls.name
           DYNAMODB_ENTRIES_TABLE             = aws_dynamodb_table.entries.name
-          # Twilio configuration
-          TWILIO_ACCOUNT_SID                 = var.twilio_account_sid
-          TWILIO_AUTH_TOKEN                  = var.twilio_auth_token
-          TWILIO_PHONE_NUMBER                = var.twilio_phone_number
+          # Telnyx configuration
+          TELNYX_API_KEY                     = var.telnyx_api_key
+          TELNYX_PUBLIC_KEY                  = var.telnyx_public_key
+          TELNYX_CONNECTION_ID               = var.telnyx_connection_id
+          TELNYX_PHONE_NUMBER                = var.telnyx_phone_number
           # Lambda ARNs for scheduler integration
           SCHEDULER_MANAGER_ARN              = aws_lambda_function.scheduler_manager.arn
         }
@@ -209,17 +210,17 @@ resource "aws_iam_role_policy_attachment" "app_runner_secrets_access" {
   policy_arn = aws_iam_policy.app_runner_secrets_access.arn
 }
 
-# Twilio Credentials Secret
-resource "aws_secretsmanager_secret" "twilio_credentials" {
-  name        = "${var.app_name}-${var.environment}-twilio-credentials"
-  description = "Twilio API credentials for ${var.app_name}"
+# Telnyx Credentials Secret
+resource "aws_secretsmanager_secret" "telnyx_credentials" {
+  name        = "${var.app_name}-${var.environment}-telnyx-credentials"
+  description = "Telnyx API credentials for ${var.app_name}"
 }
 
-resource "aws_secretsmanager_secret_version" "twilio_credentials" {
-  secret_id = aws_secretsmanager_secret.twilio_credentials.id
+resource "aws_secretsmanager_secret_version" "telnyx_credentials" {
+  secret_id = aws_secretsmanager_secret.telnyx_credentials.id
   secret_string = jsonencode({
-    accountSid = var.twilio_account_sid
-    authToken  = var.twilio_auth_token
+    apiKey    = var.telnyx_api_key
+    publicKey = var.telnyx_public_key
   })
 }
 
