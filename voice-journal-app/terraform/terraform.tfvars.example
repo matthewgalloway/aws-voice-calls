@@ -1,0 +1,15 @@
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to version control
+
+aws_region  = "us-east-1"
+app_name    = "voice-journal"
+environment = "prod"
+
+# Get these from https://dashboard.clerk.com
+clerk_publishable_key = "pk_test_your-key-here"
+clerk_secret_key      = "sk_test_your-key-here"
+
+# Optional: Adjust resources
+# app_runner_cpu    = "1024"   # 1 vCPU
+# app_runner_memory = "2048"   # 2 GB
+# image_tag         = "latest"
