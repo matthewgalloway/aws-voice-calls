@@ -6,23 +6,38 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:start": "docker-compose up -d",
+    "db:stop": "docker-compose down",
+    "db:setup": "ts-node --esm scripts/setup-local-db.ts",
+    "db:reset": "ts-node --esm scripts/setup-local-db.ts --reset",
+    "tunnel": "./scripts/dev-tunnel.sh",
+    "dev:full": "npm run db:start && npm run db:setup && npm run dev"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.969.0",
+    "@aws-sdk/client-lambda": "^3.970.0",
+    "@aws-sdk/client-secrets-manager": "^3.969.0",
+    "@aws-sdk/lib-dynamodb": "^3.969.0",
     "@clerk/nextjs": "^5.0.0",
     "next": "14.2.25",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "sharp": "^0.33.5",
+    "telnyx": "^5.2.1",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
+    "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.2.25",
     "postcss": "^8.4.33",
     "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }
 }

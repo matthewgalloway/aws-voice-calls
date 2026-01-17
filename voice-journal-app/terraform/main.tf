@@ -21,6 +21,9 @@ provider "aws" {
   }
 }
 
+# Get current AWS account ID
+data "aws_caller_identity" "current" {}
+
 # ECR Repository for Docker images
 resource "aws_ecr_repository" "app" {
   name                 = "${var.app_name}-${var.environment}"
@@ -111,16 +114,32 @@ resource "aws_apprunner_service" "app" {
       image_configuration {
         port = "3000"
 
+        # Non-sensitive environment variables only
         runtime_environment_variables = {
           NODE_ENV                           = "production"
           HOSTNAME                           = "0.0.0.0"
           PORT                               = "3000"
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY  = var.clerk_publishable_key
-          CLERK_SECRET_KEY                   = var.clerk_secret_key
           NEXT_PUBLIC_CLERK_SIGN_IN_URL      = "/sign-in"
           NEXT_PUBLIC_CLERK_SIGN_UP_URL      = "/sign-up"
           NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL = "/dashboard"
           NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL = "/dashboard"
+          # DynamoDB tables
+          DYNAMODB_USERS_TABLE               = aws_dynamodb_table.users.name
+          DYNAMODB_CALLS_TABLE               = aws_dynamodb_table.calls.name
+          DYNAMODB_ENTRIES_TABLE             = aws_dynamodb_table.entries.name
+          # Non-sensitive Telnyx config
+          TELNYX_CONNECTION_ID               = var.telnyx_connection_id
+          TELNYX_PHONE_NUMBER                = var.telnyx_phone_number
+          # Lambda function name for scheduler (ARN constructed at runtime to avoid circular dependency)
+          SCHEDULER_MANAGER_FUNCTION_NAME    = "${var.app_name}-${var.environment}-scheduler-manager"
+        }
+
+        # Sensitive values from Secrets Manager (not visible in AWS console)
+        runtime_environment_secrets = {
+          CLERK_SECRET_KEY  = aws_secretsmanager_secret.clerk_secret_key.arn
+          TELNYX_API_KEY    = "${aws_secretsmanager_secret.telnyx_credentials.arn}:apiKey::"
+          TELNYX_PUBLIC_KEY = "${aws_secretsmanager_secret.telnyx_credentials.arn}:publicKey::"
         }
       }
 
@@ -187,7 +206,8 @@ resource "aws_iam_policy" "app_runner_secrets_access" {
           "secretsmanager:GetSecretValue"
         ]
         Resource = [
-          aws_secretsmanager_secret.clerk_secret_key.arn
+          aws_secretsmanager_secret.clerk_secret_key.arn,
+          aws_secretsmanager_secret.telnyx_credentials.arn
         ]
       }
     ]
@@ -197,4 +217,74 @@ resource "aws_iam_policy" "app_runner_secrets_access" {
 resource "aws_iam_role_policy_attachment" "app_runner_secrets_access" {
   role       = aws_iam_role.app_runner_instance.name
   policy_arn = aws_iam_policy.app_runner_secrets_access.arn
+}
+
+# Telnyx Credentials Secret
+resource "aws_secretsmanager_secret" "telnyx_credentials" {
+  name        = "${var.app_name}-${var.environment}-telnyx-credentials"
+  description = "Telnyx API credentials for ${var.app_name}"
+}
+
+resource "aws_secretsmanager_secret_version" "telnyx_credentials" {
+  secret_id = aws_secretsmanager_secret.telnyx_credentials.id
+  secret_string = jsonencode({
+    apiKey    = var.telnyx_api_key
+    publicKey = var.telnyx_public_key
+  })
+}
+
+# IAM Policy for App Runner to access DynamoDB
+resource "aws_iam_policy" "app_runner_dynamodb_access" {
+  name        = "${var.app_name}-${var.environment}-dynamodb-access"
+  description = "Allow App Runner to access DynamoDB tables"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query"
+        ]
+        Resource = [
+          aws_dynamodb_table.users.arn,
+          aws_dynamodb_table.calls.arn,
+          aws_dynamodb_table.entries.arn,
+          "${aws_dynamodb_table.calls.arn}/index/*",
+          "${aws_dynamodb_table.entries.arn}/index/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "app_runner_dynamodb_access" {
+  role       = aws_iam_role.app_runner_instance.name
+  policy_arn = aws_iam_policy.app_runner_dynamodb_access.arn
+}
+
+# IAM Policy for App Runner to invoke Scheduler Manager Lambda
+resource "aws_iam_policy" "app_runner_lambda_invoke" {
+  name        = "${var.app_name}-${var.environment}-lambda-invoke"
+  description = "Allow App Runner to invoke Lambda functions"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "lambda:InvokeFunction"
+        Resource = "arn:aws:lambda:${var.aws_region}:${data.aws_caller_identity.current.account_id}:function:${var.app_name}-${var.environment}-scheduler-manager"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "app_runner_lambda_invoke" {
+  role       = aws_iam_role.app_runner_instance.name
+  policy_arn = aws_iam_policy.app_runner_lambda_invoke.arn
 }

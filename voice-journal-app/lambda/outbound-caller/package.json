@@ -1,0 +1,22 @@
+{
+  "name": "outbound-caller-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function to initiate outbound calls via Telnyx",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "package": "npm run build && rm -f function.zip && cp -r node_modules dist/ && cd dist && zip -r ../function.zip . && rm -rf node_modules",
+    "clean": "rm -rf dist function.zip"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.969.0",
+    "@aws-sdk/client-secrets-manager": "^3.969.0",
+    "@aws-sdk/lib-dynamodb": "^3.969.0",
+    "telnyx": "^5.2.2"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

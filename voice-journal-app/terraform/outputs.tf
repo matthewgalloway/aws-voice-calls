@@ -39,3 +39,44 @@ output "push_commands" {
     aws apprunner start-deployment --service-arn ${aws_apprunner_service.app.arn} --region ${var.aws_region}
   EOT
 }
+
+# DynamoDB Tables
+output "dynamodb_users_table" {
+  description = "DynamoDB users table name"
+  value       = aws_dynamodb_table.users.name
+}
+
+output "dynamodb_calls_table" {
+  description = "DynamoDB calls table name"
+  value       = aws_dynamodb_table.calls.name
+}
+
+output "dynamodb_entries_table" {
+  description = "DynamoDB entries table name"
+  value       = aws_dynamodb_table.entries.name
+}
+
+# Lambda Functions
+output "outbound_caller_lambda_arn" {
+  description = "Outbound caller Lambda ARN"
+  value       = aws_lambda_function.outbound_caller.arn
+}
+
+output "scheduler_manager_lambda_arn" {
+  description = "Scheduler manager Lambda ARN"
+  value       = aws_lambda_function.scheduler_manager.arn
+}
+
+# Telnyx Webhook URLs
+output "telnyx_webhook_urls" {
+  description = "URLs to configure in Telnyx portal"
+  value       = <<-EOT
+    Configure these URLs in Telnyx portal for your connection:
+
+    Voice webhook (HTTP POST):
+      https://${aws_apprunner_service.app.service_url}/api/telnyx/voice
+
+    Status callback (HTTP POST):
+      https://${aws_apprunner_service.app.service_url}/api/telnyx/status
+  EOT
+}
