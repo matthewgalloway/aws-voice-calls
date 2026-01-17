@@ -109,14 +109,30 @@ export interface TelnyxTranscriptionPayload {
 
 // Common timezone options for the UI
 export const TIMEZONE_OPTIONS = [
+  // US timezones
   { value: 'America/New_York', label: 'Eastern Time (ET)' },
   { value: 'America/Chicago', label: 'Central Time (CT)' },
   { value: 'America/Denver', label: 'Mountain Time (MT)' },
   { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
   { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
   { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
-  { value: 'Europe/London', label: 'London (GMT/BST)' },
-  { value: 'Europe/Paris', label: 'Paris (CET/CEST)' },
-  { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
-  { value: 'Australia/Sydney', label: 'Sydney (AEST/AEDT)' },
+  // European timezones
+  { value: 'Europe/London', label: 'UK - London (GMT/BST)' },
+  { value: 'Europe/Dublin', label: 'Ireland - Dublin (GMT/IST)' },
+  { value: 'Europe/Lisbon', label: 'Portugal - Lisbon (WET/WEST)' },
+  { value: 'Europe/Paris', label: 'France - Paris (CET/CEST)' },
+  { value: 'Europe/Berlin', label: 'Germany - Berlin (CET/CEST)' },
+  { value: 'Europe/Amsterdam', label: 'Netherlands - Amsterdam (CET/CEST)' },
+  { value: 'Europe/Madrid', label: 'Spain - Madrid (CET/CEST)' },
+  { value: 'Europe/Rome', label: 'Italy - Rome (CET/CEST)' },
+  { value: 'Europe/Athens', label: 'Greece - Athens (EET/EEST)' },
+  // Other timezones
+  { value: 'Asia/Tokyo', label: 'Japan - Tokyo (JST)' },
+  { value: 'Asia/Shanghai', label: 'China - Shanghai (CST)' },
+  { value: 'Asia/Singapore', label: 'Singapore (SGT)' },
+  { value: 'Asia/Dubai', label: 'UAE - Dubai (GST)' },
+  { value: 'Australia/Sydney', label: 'Australia - Sydney (AEST/AEDT)' },
+  { value: 'Australia/Melbourne', label: 'Australia - Melbourne (AEST/AEDT)' },
+  // UTC
+  { value: 'UTC', label: 'UTC (Coordinated Universal Time)' },
 ] as const;

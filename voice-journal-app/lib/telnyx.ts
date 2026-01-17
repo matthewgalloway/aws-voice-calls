@@ -1,9 +1,9 @@
 import Telnyx from 'telnyx';
 
-// Initialize Telnyx client
-let telnyxClient: ReturnType<typeof Telnyx> | null = null;
+// Initialize Telnyx client (v5 SDK uses class constructor)
+let telnyxClient: Telnyx | null = null;
 
-export function getTelnyxClient(): ReturnType<typeof Telnyx> {
+export function getTelnyxClient(): Telnyx {
   if (!telnyxClient) {
     const apiKey = process.env.TELNYX_API_KEY;
 
@@ -11,7 +11,7 @@ export function getTelnyxClient(): ReturnType<typeof Telnyx> {
       throw new Error('Telnyx API key not configured');
     }
 
-    telnyxClient = Telnyx(apiKey);
+    telnyxClient = new Telnyx({ apiKey });
   }
   return telnyxClient;
 }
@@ -86,7 +86,7 @@ export async function initiateOutboundCall(options: {
   const { to, from, userId, webhookBaseUrl, connectionId } = options;
   const client = getTelnyxClient();
 
-  const call = await client.calls.create({
+  const call = await client.calls.dial({
     connection_id: connectionId,
     to,
     from,
@@ -95,17 +95,10 @@ export async function initiateOutboundCall(options: {
     webhook_url_method: 'POST',
   });
 
-  return call.data.call_control_id;
+  const callControlId = call.data?.call_control_id;
+  if (!callControlId) {
+    throw new Error('No call_control_id returned from Telnyx');
+  }
+  return callControlId;
 }
 
-// Send TeXML response for call control
-export async function answerWithTeXML(options: {
-  callControlId: string;
-  texmlUrl: string;
-}): Promise<void> {
-  const client = getTelnyxClient();
-
-  await client.calls.answer(options.callControlId, {
-    texml_url: options.texmlUrl,
-  });
-}

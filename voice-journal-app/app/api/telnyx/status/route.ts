@@ -33,7 +33,7 @@ function mapTelnyxState(state: string, eventType: string): CallRecord['status'] 
 // POST /api/telnyx/status - Handle call status updates
 export async function POST(request: Request) {
   try {
-    const webhookData = await parseTelnyxWebhook(request) as TelnyxWebhookPayload;
+    const webhookData = await parseTelnyxWebhook(request) as unknown as TelnyxWebhookPayload;
     const eventType = webhookData.data.event_type;
     const payload = webhookData.data.payload as TelnyxCallPayload;
 

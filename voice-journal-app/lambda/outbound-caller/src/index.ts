@@ -123,16 +123,16 @@ export async function handler(event: ScheduledEvent | ScheduledCallEvent, contex
     phoneNumber = user.phoneNumber;
   }
 
-  // Get Telnyx API key
+  // Get Telnyx API key and initialize client
   const apiKey = await getTelnyxApiKey();
-  const telnyx = Telnyx(apiKey);
+  const telnyx = new Telnyx({ apiKey });
 
   try {
     // Encode userId in client_state for the webhook to retrieve
     const clientState = Buffer.from(userId).toString('base64');
 
-    // Initiate the outbound call
-    const call = await telnyx.calls.create({
+    // Initiate the outbound call using v5 SDK dial method
+    const call = await telnyx.calls.dial({
       connection_id: TELNYX_CONNECTION_ID,
       to: phoneNumber,
       from: TELNYX_PHONE_NUMBER,
@@ -142,7 +142,10 @@ export async function handler(event: ScheduledEvent | ScheduledCallEvent, contex
       answering_machine_detection: 'detect',
     });
 
-    const callControlId = call.data.call_control_id;
+    const callControlId = call.data?.call_control_id;
+    if (!callControlId) {
+      throw new Error('No call_control_id returned from Telnyx');
+    }
     console.log(`Call initiated: ${callControlId}`);
 
     // Record the call in DynamoDB

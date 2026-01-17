@@ -6,7 +6,7 @@ import type { TelnyxWebhookPayload, TelnyxTranscriptionPayload } from '@/types';
 // POST /api/telnyx/transcription - Handle transcription completion callback
 export async function POST(request: Request) {
   try {
-    const webhookData = await parseTelnyxWebhook(request) as TelnyxWebhookPayload;
+    const webhookData = await parseTelnyxWebhook(request) as unknown as TelnyxWebhookPayload;
     const eventType = webhookData.data.event_type;
 
     // Only handle transcription.completed events

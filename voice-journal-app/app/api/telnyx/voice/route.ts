@@ -11,7 +11,7 @@ import type { TelnyxWebhookPayload, TelnyxCallPayload } from '@/types';
 // POST /api/telnyx/voice - Handle incoming/outgoing voice calls
 export async function POST(request: NextRequest) {
   try {
-    const webhookData = await parseTelnyxWebhook(request) as TelnyxWebhookPayload;
+    const webhookData = await parseTelnyxWebhook(request) as unknown as TelnyxWebhookPayload;
     const eventType = webhookData.data.event_type;
     const payload = webhookData.data.payload as TelnyxCallPayload;
 

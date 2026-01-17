@@ -21,6 +21,9 @@ provider "aws" {
   }
 }
 
+# Get current AWS account ID
+data "aws_caller_identity" "current" {}
+
 # ECR Repository for Docker images
 resource "aws_ecr_repository" "app" {
   name                 = "${var.app_name}-${var.environment}"
@@ -111,12 +114,12 @@ resource "aws_apprunner_service" "app" {
       image_configuration {
         port = "3000"
 
+        # Non-sensitive environment variables only
         runtime_environment_variables = {
           NODE_ENV                           = "production"
           HOSTNAME                           = "0.0.0.0"
           PORT                               = "3000"
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY  = var.clerk_publishable_key
-          CLERK_SECRET_KEY                   = var.clerk_secret_key
           NEXT_PUBLIC_CLERK_SIGN_IN_URL      = "/sign-in"
           NEXT_PUBLIC_CLERK_SIGN_UP_URL      = "/sign-up"
           NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL = "/dashboard"
@@ -125,13 +128,18 @@ resource "aws_apprunner_service" "app" {
           DYNAMODB_USERS_TABLE               = aws_dynamodb_table.users.name
           DYNAMODB_CALLS_TABLE               = aws_dynamodb_table.calls.name
           DYNAMODB_ENTRIES_TABLE             = aws_dynamodb_table.entries.name
-          # Telnyx configuration
-          TELNYX_API_KEY                     = var.telnyx_api_key
-          TELNYX_PUBLIC_KEY                  = var.telnyx_public_key
+          # Non-sensitive Telnyx config
           TELNYX_CONNECTION_ID               = var.telnyx_connection_id
           TELNYX_PHONE_NUMBER                = var.telnyx_phone_number
-          # Lambda ARNs for scheduler integration
-          SCHEDULER_MANAGER_ARN              = aws_lambda_function.scheduler_manager.arn
+          # Lambda function name for scheduler (ARN constructed at runtime to avoid circular dependency)
+          SCHEDULER_MANAGER_FUNCTION_NAME    = "${var.app_name}-${var.environment}-scheduler-manager"
+        }
+
+        # Sensitive values from Secrets Manager (not visible in AWS console)
+        runtime_environment_secrets = {
+          CLERK_SECRET_KEY  = aws_secretsmanager_secret.clerk_secret_key.arn
+          TELNYX_API_KEY    = "${aws_secretsmanager_secret.telnyx_credentials.arn}:apiKey::"
+          TELNYX_PUBLIC_KEY = "${aws_secretsmanager_secret.telnyx_credentials.arn}:publicKey::"
         }
       }
 
@@ -198,7 +206,8 @@ resource "aws_iam_policy" "app_runner_secrets_access" {
           "secretsmanager:GetSecretValue"
         ]
         Resource = [
-          aws_secretsmanager_secret.clerk_secret_key.arn
+          aws_secretsmanager_secret.clerk_secret_key.arn,
+          aws_secretsmanager_secret.telnyx_credentials.arn
         ]
       }
     ]
@@ -269,7 +278,7 @@ resource "aws_iam_policy" "app_runner_lambda_invoke" {
       {
         Effect   = "Allow"
         Action   = "lambda:InvokeFunction"
-        Resource = aws_lambda_function.scheduler_manager.arn
+        Resource = "arn:aws:lambda:${var.aws_region}:${data.aws_caller_identity.current.account_id}:function:${var.app_name}-${var.environment}-scheduler-manager"
       }
     ]
   })

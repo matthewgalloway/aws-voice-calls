@@ -20,10 +20,10 @@ resource "aws_dynamodb_table" "users" {
 resource "aws_dynamodb_table" "calls" {
   name         = "${var.app_name}-${var.environment}-calls"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "callSid"
+  hash_key     = "callControlId"
 
   attribute {
-    name = "callSid"
+    name = "callControlId"
     type = "S"
   }
 

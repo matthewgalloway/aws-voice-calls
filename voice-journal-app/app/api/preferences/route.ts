@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { getUserPreferences, saveUserPreferences } from '@/lib/dynamodb';
 import type { SavePreferencesRequest } from '@/types';
+
+const lambdaClient = new LambdaClient({});
+const SCHEDULER_MANAGER_FUNCTION = process.env.SCHEDULER_MANAGER_FUNCTION_NAME;
 
 // GET /api/preferences - Get current user's preferences
 export async function GET() {
@@ -68,8 +72,40 @@ export async function POST(request: NextRequest) {
       isActive: true,
     });
 
-    // TODO: Trigger scheduler-manager Lambda to update EventBridge schedule
-    // This will be implemented when we add the Lambda integration
+    // Invoke scheduler-manager Lambda to create/update EventBridge schedule
+    if (SCHEDULER_MANAGER_FUNCTION && body.phoneNumber && body.preferredCallTime && body.timezone) {
+      try {
+        console.log('Invoking scheduler-manager Lambda...');
+        const lambdaPayload = {
+          action: 'UPDATE', // UPDATE will create if doesn't exist
+          userId,
+          phoneNumber: body.phoneNumber,
+          preferredCallTime: body.preferredCallTime,
+          timezone: body.timezone,
+        };
+
+        const response = await lambdaClient.send(
+          new InvokeCommand({
+            FunctionName: SCHEDULER_MANAGER_FUNCTION,
+            InvocationType: 'RequestResponse',
+            Payload: Buffer.from(JSON.stringify(lambdaPayload)),
+          })
+        );
+
+        if (response.FunctionError) {
+          const errorPayload = response.Payload ? JSON.parse(Buffer.from(response.Payload).toString()) : {};
+          console.error('Scheduler Lambda error:', response.FunctionError, errorPayload);
+        } else {
+          const result = response.Payload ? JSON.parse(Buffer.from(response.Payload).toString()) : {};
+          console.log('Schedule created/updated:', result);
+        }
+      } catch (lambdaError) {
+        // Log but don't fail the request - preferences were saved
+        console.error('Failed to invoke scheduler Lambda:', lambdaError);
+      }
+    } else {
+      console.log('Skipping scheduler - missing function name or required fields');
+    }
 
     return NextResponse.json({
       success: true,

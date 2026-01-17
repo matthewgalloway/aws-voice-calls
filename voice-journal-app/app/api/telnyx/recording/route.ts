@@ -7,7 +7,7 @@ import type { TelnyxWebhookPayload, TelnyxRecordingPayload } from '@/types';
 // POST /api/telnyx/recording - Handle recording completion callback
 export async function POST(request: Request) {
   try {
-    const webhookData = await parseTelnyxWebhook(request) as TelnyxWebhookPayload;
+    const webhookData = await parseTelnyxWebhook(request) as unknown as TelnyxWebhookPayload;
     const eventType = webhookData.data.event_type;
 
     // Only handle recording.saved events

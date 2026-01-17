@@ -16,12 +16,14 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.969.0",
+    "@aws-sdk/client-lambda": "^3.970.0",
     "@aws-sdk/client-secrets-manager": "^3.969.0",
     "@aws-sdk/lib-dynamodb": "^3.969.0",
     "@clerk/nextjs": "^5.0.0",
     "next": "14.2.25",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "sharp": "^0.33.5",
     "telnyx": "^5.2.1",
     "uuid": "^13.0.0"
   },

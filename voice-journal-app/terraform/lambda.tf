@@ -76,10 +76,16 @@ resource "aws_lambda_function" "outbound_caller" {
       TELNYX_SECRET_ARN     = aws_secretsmanager_secret.telnyx_credentials.arn
       TELNYX_PHONE_NUMBER   = var.telnyx_phone_number
       TELNYX_CONNECTION_ID  = var.telnyx_connection_id
-      APP_URL               = "https://${aws_apprunner_service.app.service_url}"
+      # APP_URL will be updated after App Runner is created
+      APP_URL               = "https://placeholder.awsapprunner.com"
       USERS_TABLE           = aws_dynamodb_table.users.name
       CALLS_TABLE           = aws_dynamodb_table.calls.name
     }
+  }
+
+  # Don't create cycle - we'll update APP_URL after deployment
+  lifecycle {
+    ignore_changes = [environment]
   }
 
   depends_on = [aws_iam_role_policy.outbound_caller_policy]
@@ -188,4 +194,22 @@ resource "aws_lambda_permission" "scheduler_manager_invoke" {
   function_name = aws_lambda_function.scheduler_manager.function_name
   principal     = "tasks.apprunner.amazonaws.com"
   source_arn    = aws_apprunner_service.app.arn
+}
+
+# Update Lambda environment with actual App Runner URL after deployment
+resource "null_resource" "update_lambda_app_url" {
+  depends_on = [aws_apprunner_service.app, aws_lambda_function.outbound_caller]
+
+  triggers = {
+    app_runner_url = aws_apprunner_service.app.service_url
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      aws lambda update-function-configuration \
+        --function-name ${aws_lambda_function.outbound_caller.function_name} \
+        --environment "Variables={TELNYX_SECRET_ARN=${aws_secretsmanager_secret.telnyx_credentials.arn},TELNYX_PHONE_NUMBER=${var.telnyx_phone_number},TELNYX_CONNECTION_ID=${var.telnyx_connection_id},APP_URL=https://${aws_apprunner_service.app.service_url},USERS_TABLE=${aws_dynamodb_table.users.name},CALLS_TABLE=${aws_dynamodb_table.calls.name}}" \
+        --region ${var.aws_region}
+    EOT
+  }
 }
